@@ -11,7 +11,7 @@ In short:
 
 The Zenoss_host type is a puppet type which represents a host that is managed by puppet and should be monitored by zenoss:
 
-/etc/puppet/manifests/development/modules/zenoss/plugins/puppet/type/zenoss_host.rb
+modules/zenoss/plugins/puppet/type/zenoss_host.rb
 
 It provides the puppet property inzenoss to check whether a puppet-managed host was already added to zenoss.
 As one can not rely on a running DNS server the hosts are added with their IP to zenoss which results in devices having the IP as their device name.
@@ -25,7 +25,7 @@ These methods normally execute functionality implemented in the provider.
 
 The Zenoss provider provides the implementation of the methods to check whether a host was already added, to add a host as a device and to rename a device.
 
-/etc/puppet/manifests/development/modules/zenoss/plugins/puppet/provider/zenoss_host/zenoss.rb
+modules/zenoss/plugins/puppet/provider/zenoss_host/zenoss.rb
 
 It doesn't execute anything on its own; it is always called by the Zenoss_host type if necessary.
 
