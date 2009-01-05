@@ -1,0 +1,60 @@
+1	Automatically add Puppet clients to Zenoss
+
+1.1	How devices are added in Zenoss with Puppet
+
+In short:
+
+1.	Puppet clients with puppet class zenoss::client export their properties as Zenoss_host type to the puppet master database.
+2.	The puppet client with the puppet class zenoss::server iterates through all the Zenoss_host types in the puppet master DB and runs the logic provided by the Zenoss_host type and the Zenoss provider, which adds puppet clients to zenoss that were not added yet.
+
+1.1.1	Zenoss_host type
+
+The Zenoss_host type is a puppet type which represents a host that is managed by puppet and should be monitored by zenoss:
+
+/etc/puppet/manifests/development/modules/zenoss/plugins/puppet/type/zenoss_host.rb
+
+It provides the puppet property inzenoss to check whether a puppet-managed host was already added to zenoss.
+As one can not rely on a running DNS server the hosts are added with their IP to zenoss which results in devices having the IP as their device name.
+Thus the device in zenoss is renamed afterwards to apply the correct full qualified domain name.
+
+The retrieve method of a property returns the current state of the property. Thus, the retrieve method of inzenoss checks if a host was already added to Zenoss.
+The defaultto value specifies what the state of the property should be and the method attached to the target state (value) of the property specifies how this state can be achieved (e.g. how a host is added to Zenoss).
+These methods normally execute functionality implemented in the provider.
+
+1.1.2	Zenoss provider
+
+The Zenoss provider provides the implementation of the methods to check whether a host was already added, to add a host as a device and to rename a device.
+
+/etc/puppet/manifests/development/modules/zenoss/plugins/puppet/provider/zenoss_host/zenoss.rb
+
+It doesn't execute anything on its own; it is always called by the Zenoss_host type if necessary.
+
+1.1.3	Zenoss module manifest
+
+In the manifest is specified that a Zenoss_host type for every puppet managed host with the puppet class zenoss::client is exported to the puppet master database.
+It also specifies a puppet class zenoss::server which is configured to iterate through all Zenoss_host types in the puppet master database and check if the properties are set correctly, i.e. if the host was already added to and renamed in zenoss.
+Thus, the host running the zenoss server is assigned the puppet class zenoss::server.
+
+
+2	Appendix
+
+2.1	Using ensurable
+
+Instead of using the property inzenoss one could mange the adding of hosts to zenoss with the built in property ensure.
+It requires the implementation of create, destroy and exists? methods on the provider and can have the two states present and absent.
+Thus, in this case puppet assumes that it manages the whole lifecycle of the object. Initially the ensure property is not set to present. If ensure => present is specified in the manifest puppet checks if the host was added to zenoss, calling the exists? method, and if not it executes the create method. Then the ensure property is set to present. If the previously added device is manually removed from zenoss, puppet will not re-add the device or check if it was added as the property ensure is already set to present.
+To remove a device from zenoss the destroy method must be implemented, the ensure property in the manifest should be set to absent and the device should exist. Only in this case the device is removed and the ensure property is set to absent, which will make puppet adding the host again as soon as the ensure property is set to present in the manifest file.
+
+2.2	Renamed property not necessary anymore
+
+The renamed property was introduced to allow puppet in every run to check if a device was already renamed or not. This was necessary because a bug in zenoss prevented the renaming of a device before performance data for that device was available. If the version 2.3.0 is patched accordingly the renaming should work flawless and the renamed property is not necessary anymore.
+
+The corresponding ticket: http://dev.zenoss.com/trac/ticket/4020
+
+License
+=======
+
+This program is free software; you can redistribute 
+it and/or modify it under the terms of the GNU 
+General Public License version 3 as published by 
+the Free Software Foundation.
