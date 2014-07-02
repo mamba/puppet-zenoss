@@ -124,7 +124,7 @@ Puppet::Type.newtype(:zenoss_host) do
             when "SunOS"
                 "/Server/Solaris"
             else
-                "/Server"
+                value
             end
         end
     end
